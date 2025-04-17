@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mqtt_broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    container_name: mosquitto_broker
+    restart: unless-stopped
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: health_monitoring
+    container_name: timescaledb_service
+    restart: unless-stopped
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -d health_monitoring"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+  timescaledb_data:
